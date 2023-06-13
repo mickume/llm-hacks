@@ -5,16 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 
-	"github.com/mickume/llm_hacks/internal"
+	"github.com/gocolly/colly"
 )
 
 const (
 	minLineLength = 20
+	newLineToken  = "\n\n"
 
 	startToken = ""
 	endToken   = "\n"
@@ -132,7 +132,7 @@ func merge(path string) error {
 	defer out.Close()
 
 	// scan the dir for files to merge into
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -163,12 +163,33 @@ func merge(path string) error {
 	return nil
 }
 
+func fetch(id, output string) error {
+	f, err := os.Create(output)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	c := colly.NewCollector()
+
+	c.OnHTML("div.userstuff p", func(e *colly.HTMLElement) {
+		f.WriteString(e.Text + newLineToken)
+	})
+
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Retrieving ", r.URL)
+	})
+
+	url := fmt.Sprintf("https://archiveofourown.org/works/%s?view_full_work=true&view_adult=true", id)
+	return c.Visit(url)
+}
+
 func process(id, path string) error {
 	source := fmt.Sprintf("%s/%s.txt", path, id)
 	output := fmt.Sprintf("%s/%s.training.txt", path, id)
 
 	if _, err := os.Stat(source); errors.Is(err, os.ErrNotExist) {
-		if err := internal.RetrieveFromAO3(id, source); err != nil {
+		if err := fetch(id, source); err != nil {
 			return err
 		}
 	}
