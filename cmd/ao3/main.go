@@ -203,7 +203,7 @@ func main() {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			id := strings.TrimSpace(scanner.Text())
-			if !strings.HasPrefix(id, "#") {
+			if len(id) > 0 && !strings.HasPrefix(id, "#") {
 				if err := process(id, path); err != nil {
 					log.Fatal(err)
 				}
