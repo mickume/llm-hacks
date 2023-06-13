@@ -1,0 +1,17 @@
+torch
+torchvision
+torchaudio
+tensorflow-macos
+tensorflow-metal
+#
+transformers
+sentence-transformers
+tiktoken
+datasets
+# other common stuff
+numpy
+pandas
+matplotlib
+scikit-learn
+scipy
+plotly
