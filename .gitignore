@@ -1,5 +1,7 @@
 # custom stuff
 datasets/
+bin/
+models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

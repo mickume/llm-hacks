@@ -3,10 +3,12 @@ package main
 import (
 	"bufio"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gocolly/colly"
@@ -119,12 +121,11 @@ func clean_rewrite(source, target string) (int, error) {
 	return n, nil
 }
 
-func merge(path string) error {
+func merge(path, name string) error {
 
 	// create and open the merge file
 
-	//merge_file := fmt.Sprintf("%s/input_%d.txt", path, stdlib.Now())
-	merge_file := fmt.Sprintf("%s/input.txt", path)
+	merge_file := fmt.Sprintf("%s/%s", path, name)
 	out, err := os.OpenFile(merge_file, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -204,16 +205,33 @@ func process(id, path string) error {
 	return nil
 }
 
-// aoc [input.txt | story ID] output_dir
+// fetch [input.txt | story ID] output_dir
 func main() {
-	if len(os.Args) != 3 {
-		log.Fatal(fmt.Errorf("invalid arguments"))
+
+	var id string
+	var input string
+	var training string
+	var output string
+
+	flag.StringVar(&id, "id", "", "Story ID to fetch")
+	flag.StringVar(&input, "i", "input.txt", "File with Story IDs to fetch")
+	flag.StringVar(&training, "o", "training.txt", "Name of the merged file")
+	flag.StringVar(&output, "dir", ".", "Output dir")
+	flag.Parse()
+
+	path, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	input := os.Args[1]
-	path := os.Args[2]
+	if input == "input.txt" {
+		input = filepath.Join(path, input)
+	}
+	if output == "." {
+		output = filepath.Join(path, output)
+	}
 
-	if strings.HasSuffix(input, ".txt") {
+	if id == "" {
 		file, err := os.Open(input)
 		if err != nil {
 			log.Fatal(err)
@@ -225,19 +243,19 @@ func main() {
 		for scanner.Scan() {
 			id := strings.TrimSpace(scanner.Text())
 			if len(id) > 0 && !strings.HasPrefix(id, "#") {
-				if err := process(id, path); err != nil {
+				if err := process(id, output); err != nil {
 					log.Fatal(err)
 				}
 			}
 		}
 
 		// merge all the texts
-		if err := merge(path); err != nil {
+		if err := merge(output, training); err != nil {
 			log.Fatal(err)
 		}
 
 	} else {
-		if err := process(input, path); err != nil {
+		if err := process(id, output); err != nil {
 			log.Fatal(err)
 		}
 	}
